@@ -6,6 +6,7 @@ import { useForm, type FieldErrors, type UseFormRegister, type UseFormSetValue }
 import {
   ArrowLeft,
   ArrowRight,
+  Car,
   Check,
   Clock3,
   Luggage,
@@ -13,6 +14,7 @@ import {
   Plane,
   Route,
   ShieldCheck,
+  UserRound,
   UsersRound,
 } from 'lucide-react';
 import { CAB_CATEGORIES, CITIES, TRIP_TYPES, VEHICLES } from '@/constants';
@@ -77,6 +79,7 @@ function Field({
 export default function BookingWidget() {
   const [step, setStep] = useState(0);
   const [submittedReference, setSubmittedReference] = useState<string>();
+  const [submittedSummary, setSubmittedSummary] = useState<{ name: string; trip: string; pickup: string; destination: string }>();
   const [submitError, setSubmitError] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
   const {
@@ -105,6 +108,8 @@ export default function BookingWidget() {
       email: '',
       flightNumber: '',
       specialNotes: '',
+      licenseNote: '',
+      ownVehicleDetails: '',
     },
   });
   const values = watch();
@@ -113,12 +118,14 @@ export default function BookingWidget() {
   useEffect(() => {
     const applySelection = (detail: {
       tripType: TripType;
+      serviceId?: import('@/types').ServiceId;
       destination?: string;
       category?: CabCategory;
       vehicleType?: VehicleType;
     }) => {
-      if (!['HOURLY', 'AIRPORT', 'OUTSTATION'].includes(detail.tripType)) return;
+      if (!['HOURLY', 'AIRPORT', 'OUTSTATION', 'SELF_DRIVE', 'DRIVER_ON_HIRE'].includes(detail.tripType)) return;
       setValue('tripType', detail.tripType, { shouldDirty: true });
+      if (detail.serviceId) setValue('serviceId', detail.serviceId, { shouldDirty: true });
       if (detail.destination) setValue('destination', detail.destination, { shouldDirty: true });
       if (detail.category && ['COMFORT', 'PREMIUM', 'TT'].includes(detail.category)) {
         setValue('cabCategory', detail.category, { shouldDirty: true });
@@ -126,8 +133,9 @@ export default function BookingWidget() {
       if (detail.vehicleType && ['SEATER_5', 'SEATER_7', 'TT_12'].includes(detail.vehicleType)) {
         setValue('vehicleType', detail.vehicleType, { shouldDirty: true });
       }
-      clearErrors(['tripType', 'destination', 'cabCategory', 'vehicleType']);
+      clearErrors(['tripType', 'destination', 'cabCategory', 'vehicleType', 'serviceId']);
       setSubmittedReference(undefined);
+      setSubmittedSummary(undefined);
       setSubmitError(undefined);
       setStep(detail.destination ? 4 : 0);
     };
@@ -135,9 +143,10 @@ export default function BookingWidget() {
     const onSelection = (event: Event) => {
       applySelection((event as CustomEvent<{
         tripType: TripType;
+        serviceId?: import('@/types').ServiceId;
         destination?: string;
         category?: CabCategory;
-        vehicleType: VehicleType;
+        vehicleType?: VehicleType;
       }>).detail);
     };
 
@@ -145,9 +154,10 @@ export default function BookingWidget() {
     if (hash.startsWith('#book?')) {
       const params = new URLSearchParams(hash.split('?')[1]);
       const trip = params.get('trip') as TripType | null;
-      if (trip && ['HOURLY', 'AIRPORT', 'OUTSTATION'].includes(trip)) {
+      if (trip && ['HOURLY', 'AIRPORT', 'OUTSTATION', 'SELF_DRIVE', 'DRIVER_ON_HIRE'].includes(trip)) {
         applySelection({
           tripType: trip,
+          serviceId: (params.get('service') as import('@/types').ServiceId | null) || undefined,
           destination: params.get('destination') || undefined,
           category: (params.get('category') as CabCategory | null) || undefined,
           vehicleType: (params.get('vehicle') as VehicleType | null) || undefined,
@@ -155,8 +165,8 @@ export default function BookingWidget() {
       }
     }
 
-    window.addEventListener('citycab:select-booking', onSelection);
-    return () => window.removeEventListener('citycab:select-booking', onSelection);
+    window.addEventListener('logocab:select-booking', onSelection);
+    return () => window.removeEventListener('logocab:select-booking', onSelection);
   }, [clearErrors, setValue]);
 
   const moveNext = () => setStep((current) => Math.min(current + 1, steps.length - 1));
@@ -191,8 +201,17 @@ export default function BookingWidget() {
       setSubmitting(true);
       const result = await submitBooking(validation.data);
       setSubmittedReference(result.bookingReference);
+      setSubmittedSummary({
+        name: validation.data.customerName,
+        trip: TRIP_TYPES.find((trip) => trip.id === validation.data.tripType)?.label || validation.data.tripType,
+        pickup: validation.data.pickupLocation,
+        destination: validation.data.destination || 'Flexible city journey',
+      });
+      window.requestAnimationFrame(() => {
+        document.getElementById('book')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Unable to submit your booking request.');
+      setSubmitError(error instanceof Error ? `Booking not submitted: ${error.message}` : 'Booking not submitted. Please check your connection and try again.');
     } finally {
       setSubmitting(false);
     }
@@ -207,15 +226,26 @@ export default function BookingWidget() {
               <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-400/15 text-emerald-300">
                 <Check className="h-7 w-7" />
               </span>
-              <p className="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">Request received</p>
-              <h2 className="mt-2 font-[Manrope] text-3xl font-bold">We have your journey details.</h2>
-              <p className="mx-auto mt-3 max-w-xl text-slate-300">This is a booking request, not a confirmed cab allocation. Our team will review the details and contact you.</p>
+              <p className="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">Booking submitted successfully</p>
+              <h2 className="mt-2 font-[Manrope] text-3xl font-bold sm:text-4xl">Your booking request is in our system.</h2>
+              <p className="mx-auto mt-3 max-w-xl text-slate-300">Our team will review availability and contact you to confirm the driver, fare and final journey details.</p>
             </div>
             <div className="bg-[#071225] p-8 text-center sm:p-10">
               <p className="text-sm font-medium text-slate-500">YOUR BOOKING REFERENCE</p>
               <p className="mt-2 font-[Manrope] text-3xl font-bold tracking-[0.12em] text-slate-950">{submittedReference}</p>
+              {submittedSummary && (
+                <div className="mx-auto mt-7 max-w-xl rounded-2xl border border-slate-200 bg-white p-5 text-left">
+                  <p className="text-sm font-semibold text-slate-950">{submittedSummary.name} · {submittedSummary.trip}</p>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    <span className="font-semibold text-slate-900">Pickup:</span> {submittedSummary.pickup}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    <span className="font-semibold text-slate-900">Destination:</span> {submittedSummary.destination}
+                  </p>
+                </div>
+              )}
               <p className="mt-6 text-sm text-slate-500">Keep this reference handy for any follow-up. An acknowledgement is sent by email when you provide one.</p>
-              <button className="btn-secondary mt-7" onClick={() => { setSubmittedReference(undefined); setStep(0); }} type="button">Start another request</button>
+              <button className="btn-secondary mt-7" onClick={() => { setSubmittedReference(undefined); setSubmittedSummary(undefined); setStep(0); }} type="button">Start another request</button>
             </div>
           </div>
         </div>
@@ -262,7 +292,7 @@ export default function BookingWidget() {
               {step < steps.length - 1 ? (
                 <button type="button" onClick={moveNext} className="btn-primary">Continue <ArrowRight className="h-4 w-4" /></button>
               ) : (
-                <button type="button" onClick={handleSubmit} disabled={submitting} className="btn-primary">{submitting ? 'Sending request…' : 'Request My Booking'} <ArrowRight className="h-4 w-4" /></button>
+                <button type="button" onClick={handleSubmit} disabled={submitting} className="btn-primary" aria-live="polite">{submitting ? 'Submitting booking…' : 'Confirm & Submit Booking'} {!submitting && <ArrowRight className="h-4 w-4" />}</button>
               )}
             </div>
           </div>
@@ -274,10 +304,29 @@ export default function BookingWidget() {
 }
 
 function TripStep({ value, onChange }: { value: TripType; onChange: (value: TripType) => void }) {
-  const icons = { HOURLY: Clock3, AIRPORT: Plane, OUTSTATION: Route };
-  return <StepHeading number="01" title="What kind of journey are you planning?" description="Choose a service to tailor the details we request." >
-    <div className="grid gap-3 sm:grid-cols-3">{TRIP_TYPES.map((trip) => { const Icon = icons[trip.id]; return <CardChoice key={trip.id} selected={value === trip.id} onClick={() => onChange(trip.id)}><Icon className="h-5 w-5 text-brand-600" /><p className="mt-5 font-semibold text-slate-900">{trip.label}</p><p className="mt-1 text-xs leading-relaxed text-slate-500">{trip.description}</p></CardChoice>; })}</div>
-  </StepHeading>;
+  const icons: Record<TripType, typeof Car> = {
+    HOURLY: Clock3,
+    AIRPORT: Plane,
+    OUTSTATION: Route,
+    SELF_DRIVE: Car,
+    DRIVER_ON_HIRE: UserRound,
+  };
+  return (
+    <StepHeading number="01" title="What kind of journey are you planning?" description="Choose a service to tailor the details we request.">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {TRIP_TYPES.map((trip) => {
+          const Icon = icons[trip.id] ?? Car;
+          return (
+            <CardChoice key={trip.id} selected={value === trip.id} onClick={() => onChange(trip.id)}>
+              <Icon className="h-5 w-5 text-brand-600" />
+              <p className="mt-5 font-semibold text-slate-900">{trip.label}</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">{trip.description}</p>
+            </CardChoice>
+          );
+        })}
+      </div>
+    </StepHeading>
+  );
 }
 
 function CategoryStep({ value, onChange }: { value: CabCategory; onChange: (value: CabCategory) => void }) {
@@ -334,6 +383,22 @@ function JourneyStep({ tripType, values, register, setValue, clearErrors, errors
               <CardChoice selected={values.journeyType === 'ONE_WAY'} onClick={() => update('journeyType', 'ONE_WAY')}><p className="font-semibold text-slate-900">One way</p></CardChoice>
               <CardChoice selected={values.journeyType === 'ROUND_TRIP'} onClick={() => update('journeyType', 'ROUND_TRIP')}><p className="font-semibold text-slate-900">Round trip</p></CardChoice>
             </div>
+          </div>
+        )}
+        {tripType === 'SELF_DRIVE' && (
+          <div className="sm:col-span-2">
+            <Field label="Licence / self-drive requirement" error={errors.licenseNote?.message}>
+              <input className="input" placeholder="e.g. valid Indian licence, preferred model, duration" value={values.licenseNote || ''} onChange={(event) => update('licenseNote', event.target.value)} />
+            </Field>
+            <p className="mt-2 text-xs text-slate-500">Self-drive availability and licence requirements are confirmed by our team before allocation.</p>
+          </div>
+        )}
+        {tripType === 'DRIVER_ON_HIRE' && (
+          <div className="sm:col-span-2">
+            <Field label="Your vehicle details" error={errors.ownVehicleDetails?.message}>
+              <input className="input" placeholder="e.g. Maruti Dzire, registration, journey type" value={values.ownVehicleDetails || ''} onChange={(event) => update('ownVehicleDetails', event.target.value)} />
+            </Field>
+            <p className="mt-2 text-xs text-slate-500">We arrange a professional driver for your own vehicle. Availability is confirmed before the journey.</p>
           </div>
         )}
         <Field label="Pickup location" error={errors.pickupLocation?.message}><input className="input" placeholder="Enter area, landmark or address" value={values.pickupLocation || ''} onChange={(event) => update('pickupLocation', event.target.value)} /></Field>
