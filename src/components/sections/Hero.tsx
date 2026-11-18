@@ -30,7 +30,6 @@ export default function Hero() {
         <motion.div initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.8 }} className="mt-14 flex flex-wrap gap-x-8 gap-y-3 text-[0.68rem] font-bold uppercase tracking-[0.15em] text-slate-300"><span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />Bangalore requests</span><span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />Vehicle preference</span><span className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5 text-cyan-300" />Tell us the journey</span></motion.div>
       </div>
 
-      <motion.div initial={reduceMotion ? false : { opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.9, delay: 0.7, ease }} className="absolute bottom-14 right-5 hidden w-48 border-l border-white/20 pl-4 text-xs text-slate-300 lg:block"><p className="font-semibold uppercase tracking-[0.18em] text-cyan-200">Cinematic fallback</p><p className="mt-2 leading-5">Layered automotive photography, built intentionally for every device.</p></motion.div>
     </section>
   );
 }
