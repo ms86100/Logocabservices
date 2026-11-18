@@ -94,6 +94,7 @@ Deno.serve(async (request) => {
     return Response.json({ id: inserted.id, bookingReference: inserted.booking_reference }, { status: 201, headers: corsHeaders });
   } catch (error) {
     console.error(error);
-    return Response.json({ error: 'Unable to submit the booking request. Please try again.' }, { status: 500, headers: corsHeaders });
+    const detail = error instanceof Error ? error.message : 'Unknown server error';
+    return Response.json({ error: 'Unable to submit the booking request. Please try again.', details: detail }, { status: 500, headers: corsHeaders });
   }
 });

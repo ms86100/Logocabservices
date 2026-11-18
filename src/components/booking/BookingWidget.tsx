@@ -137,7 +137,7 @@ export default function BookingWidget() {
         tripType: TripType;
         destination?: string;
         category?: CabCategory;
-        vehicleType?: VehicleType;
+        vehicleType: VehicleType;
       }>).detail);
     };
 
@@ -167,13 +167,14 @@ export default function BookingWidget() {
     const formValues = getValues();
     const normalizedValues = {
       ...formValues,
-      customerName: formValues.customerName?.trim(),
-      phoneNumber: formValues.phoneNumber?.trim(),
-      pickupLocation: formValues.pickupLocation?.trim(),
-      destination: formValues.destination?.trim(),
-      bookingDate: formValues.bookingDate?.trim(),
-      pickupTime: formValues.pickupTime?.trim(),
-      email: formValues.email?.trim(),
+      ...values,
+      customerName: (values.customerName ?? formValues.customerName)?.trim(),
+      phoneNumber: (values.phoneNumber ?? formValues.phoneNumber)?.trim(),
+      pickupLocation: (values.pickupLocation ?? formValues.pickupLocation)?.trim(),
+      destination: (values.destination ?? formValues.destination)?.trim(),
+      bookingDate: (values.bookingDate ?? formValues.bookingDate)?.trim(),
+      pickupTime: (values.pickupTime ?? formValues.pickupTime)?.trim(),
+      email: (values.email ?? formValues.email)?.trim(),
     };
     const validation = bookingRequestSchema.safeParse(normalizedValues);
     if (!validation.success) {
@@ -248,8 +249,8 @@ export default function BookingWidget() {
             {step === 0 && <TripStep value={tripType} onChange={(value) => setValue('tripType', value)} />}
             {step === 1 && <CategoryStep value={values.cabCategory} onChange={(value) => setValue('cabCategory', value)} />}
             {step === 2 && <CityStep value={values.city} onChange={(value) => setValue('city', value)} />}
-            {step === 3 && <CustomerStep register={register} errors={errors} />}
-            {step === 4 && <JourneyStep tripType={tripType} values={values} register={register} setValue={setValue} errors={errors} />}
+            {step === 3 && <CustomerStep register={register} setValue={setValue} clearErrors={clearErrors} values={values} errors={errors} />}
+            {step === 4 && <JourneyStep tripType={tripType} values={values} register={register} setValue={setValue} clearErrors={clearErrors} errors={errors} />}
             {step === 5 && <VehicleStep value={values.vehicleType} onChange={(value) => setValue('vehicleType', value)} />}
             {step === 6 && <ReviewStep values={values} />}
             </motion.div></AnimatePresence>
@@ -287,24 +288,67 @@ function CityStep({ value, onChange }: { value: string; onChange: (value: string
   return <StepHeading number="03" title="Where does your journey begin?" description="We are currently collecting requests for Bangalore."><div className="grid gap-3 sm:grid-cols-2">{CITIES.map((city) => <CardChoice key={city.id} selected={value === city.name} onClick={() => onChange(city.name)}><MapPin className="h-5 w-5 text-brand-600" /><p className="mt-4 font-semibold text-slate-900">{city.name}</p><p className="mt-1 text-xs text-slate-500">{city.countryCode} · Available to request</p></CardChoice>)}</div></StepHeading>;
 }
 
-function CustomerStep({ register, errors }: { register: UseFormRegister<BookingRequestInput>; errors: FieldErrors<BookingRequestInput> }) {
-  return <StepHeading number="04" title="Who should we contact?" description="A member of our team will use these details only for this request."><div className="grid gap-5 sm:grid-cols-2"><Field label="Full name" error={errors.customerName?.message}><input className="input" autoComplete="name" placeholder="Your full name" {...register('customerName')} /></Field><Field label="Phone number" error={errors.phoneNumber?.message}><input className="input" autoComplete="tel" inputMode="tel" placeholder="+91 98765 43210" {...register('phoneNumber')} /></Field><div className="sm:col-span-2"><Field label="Email address (optional)" error={errors.email?.message}><input className="input" autoComplete="email" inputMode="email" placeholder="you@example.com" {...register('email')} /></Field></div></div></StepHeading>;
+function CustomerStep({ register, setValue, clearErrors, values, errors }: { register: UseFormRegister<BookingRequestInput>; setValue: UseFormSetValue<BookingRequestInput>; clearErrors: (name?: keyof BookingRequestInput | readonly (keyof BookingRequestInput)[]) => void; values: BookingRequestInput; errors: FieldErrors<BookingRequestInput> }) {
+  const update = (field: keyof BookingRequestInput, value: string) => {
+    setValue(field, value as never, { shouldDirty: true, shouldValidate: false });
+    clearErrors(field);
+  };
+  return (
+    <StepHeading number="04" title="Who should we contact?" description="A member of our team will use these details only for this request.">
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Full name" error={errors.customerName?.message}><input className="input" autoComplete="name" placeholder="Your full name" value={values.customerName || ''} onChange={(event) => update('customerName', event.target.value)} /></Field>
+        <Field label="Phone number" error={errors.phoneNumber?.message}><input className="input" autoComplete="tel" inputMode="tel" placeholder="+91 98765 43210" value={values.phoneNumber || ''} onChange={(event) => update('phoneNumber', event.target.value)} /></Field>
+        <div className="sm:col-span-2"><Field label="Email address (optional)" error={errors.email?.message}><input className="input" autoComplete="email" inputMode="email" placeholder="you@example.com" value={values.email || ''} onChange={(event) => update('email', event.target.value)} /></Field></div>
+      </div>
+    </StepHeading>
+  );
 }
 
-function JourneyStep({ tripType, values, register, setValue, errors }: { tripType: TripType; values: BookingRequestInput; register: UseFormRegister<BookingRequestInput>; setValue: UseFormSetValue<BookingRequestInput>; errors: FieldErrors<BookingRequestInput> }) {
+function JourneyStep({ tripType, values, register, setValue, clearErrors, errors }: { tripType: TripType; values: BookingRequestInput; register: UseFormRegister<BookingRequestInput>; setValue: UseFormSetValue<BookingRequestInput>; clearErrors: (name?: keyof BookingRequestInput | readonly (keyof BookingRequestInput)[]) => void; errors: FieldErrors<BookingRequestInput> }) {
   const needsDestination = tripType !== 'HOURLY';
-  return <StepHeading number="05" title="Add the journey details" description="Location search can be connected to your preferred Maps provider during launch. Please enter your locations manually for now."><div className="grid gap-5 sm:grid-cols-2">
-    {tripType === 'AIRPORT' && <><div className="sm:col-span-2"><p className="label">Airport direction</p><div className="grid grid-cols-2 gap-3"><CardChoice selected={values.airportType === 'PICKUP'} onClick={() => setValue('airportType', 'PICKUP')}><p className="font-semibold text-slate-900">Airport pickup</p><p className="mt-1 text-xs text-slate-500">Airport to your destination</p></CardChoice><CardChoice selected={values.airportType === 'DROP_OFF'} onClick={() => setValue('airportType', 'DROP_OFF')}><p className="font-semibold text-slate-900">Airport drop-off</p><p className="mt-1 text-xs text-slate-500">Your pickup to the airport</p></CardChoice></div>{errors.airportType?.message && <span className="mt-1 block text-xs text-rose-600">{errors.airportType.message}</span>}</div><Field label="Airport" error={errors.airport?.message}><select className="input" {...register('airport')}><option value="Kempegowda International Airport (BLR)">Kempegowda International Airport (BLR)</option></select></Field><Field label="Flight number (optional)" error={errors.flightNumber?.message}><input className="input" placeholder="e.g. AI 503" {...register('flightNumber')} /></Field></>}
-    {tripType === 'OUTSTATION' && <div className="sm:col-span-2"><p className="label">Journey type</p><div className="grid grid-cols-2 gap-3"><CardChoice selected={values.journeyType === 'ONE_WAY'} onClick={() => setValue('journeyType', 'ONE_WAY')}><p className="font-semibold text-slate-900">One way</p></CardChoice><CardChoice selected={values.journeyType === 'ROUND_TRIP'} onClick={() => setValue('journeyType', 'ROUND_TRIP')}><p className="font-semibold text-slate-900">Round trip</p></CardChoice></div></div>}
-    <Field label="Pickup location" error={errors.pickupLocation?.message}><input className="input" placeholder="Enter area, landmark or address" {...register('pickupLocation')} /></Field>
-    {needsDestination && <Field label="Destination" error={errors.destination?.message}><input className="input" placeholder="Enter area, landmark or address" {...register('destination')} /></Field>}
-    {tripType === 'HOURLY' && <Field label="Rental duration" error={errors.hourlyDuration?.message}><select className="input" value={values.hourlyDuration || ''} onChange={(event) => setValue('hourlyDuration', Number(event.target.value))}><option value="">Select duration</option>{[2, 4, 6, 8, 10, 12].map((hours) => <option key={hours} value={hours}>{hours} hours</option>)}</select></Field>}
-    <Field label={tripType === 'OUTSTATION' ? 'Departure date' : 'Booking date'} error={errors.bookingDate?.message}><input className="input" type="date" {...register('bookingDate')} /></Field>
-    {tripType === 'OUTSTATION' && values.journeyType === 'ROUND_TRIP' && <Field label="Return date" error={errors.returnDate?.message}><input className="input" type="date" {...register('returnDate')} /></Field>}
-    <Field label={tripType === 'HOURLY' ? 'Start time' : 'Pickup time'} error={errors.pickupTime?.message}><select className="input" {...register('pickupTime')}><option value="">Select time</option>{timeOptions.map((time) => <option key={time} value={time}>{time}</option>)}</select></Field>
-    <Field label="AM / PM" error={errors.amPm?.message}><div className="grid grid-cols-2 gap-3"><CardChoice selected={values.amPm === 'AM'} onClick={() => setValue('amPm', 'AM')}><p className="text-center font-semibold text-slate-900">AM</p></CardChoice><CardChoice selected={values.amPm === 'PM'} onClick={() => setValue('amPm', 'PM')}><p className="text-center font-semibold text-slate-900">PM</p></CardChoice></div></Field>
-    <div className="sm:col-span-2"><Field label="Anything else we should know? (optional)" error={errors.specialNotes?.message}><textarea className="input min-h-24 resize-y" placeholder="Access notes, additional stop, luggage or accessibility requirements" {...register('specialNotes')} /></Field></div>
-  </div></StepHeading>;
+  const update = (field: keyof BookingRequestInput, value: string | number) => {
+    setValue(field, value as never, { shouldDirty: true, shouldValidate: false });
+    clearErrors(field);
+  };
+
+  return (
+    <StepHeading number="05" title="Add the journey details" description="Please enter the complete journey details before continuing.">
+      <div className="grid gap-5 sm:grid-cols-2">
+        {tripType === 'AIRPORT' && (
+          <>
+            <div className="sm:col-span-2">
+              <p className="label">Airport direction</p>
+              <div className="grid grid-cols-2 gap-3">
+                <CardChoice selected={values.airportType === 'PICKUP'} onClick={() => update('airportType', 'PICKUP')}><p className="font-semibold text-slate-900">Airport pickup</p><p className="mt-1 text-xs text-slate-500">Airport to your destination</p></CardChoice>
+                <CardChoice selected={values.airportType === 'DROP_OFF'} onClick={() => update('airportType', 'DROP_OFF')}><p className="font-semibold text-slate-900">Airport drop-off</p><p className="mt-1 text-xs text-slate-500">Your pickup to the airport</p></CardChoice>
+              </div>
+            </div>
+            <Field label="Airport" error={errors.airport?.message}><select className="input" value={values.airport || ''} onChange={(event) => update('airport', event.target.value)}><option value="Kempegowda International Airport (BLR)">Kempegowda International Airport (BLR)</option></select></Field>
+            <Field label="Flight number (optional)" error={errors.flightNumber?.message}><input className="input" placeholder="e.g. AI 503" value={values.flightNumber || ''} onChange={(event) => update('flightNumber', event.target.value)} /></Field>
+          </>
+        )}
+        {tripType === 'OUTSTATION' && (
+          <div className="sm:col-span-2">
+            <p className="label">Journey type</p>
+            <div className="grid grid-cols-2 gap-3">
+              <CardChoice selected={values.journeyType === 'ONE_WAY'} onClick={() => update('journeyType', 'ONE_WAY')}><p className="font-semibold text-slate-900">One way</p></CardChoice>
+              <CardChoice selected={values.journeyType === 'ROUND_TRIP'} onClick={() => update('journeyType', 'ROUND_TRIP')}><p className="font-semibold text-slate-900">Round trip</p></CardChoice>
+            </div>
+          </div>
+        )}
+        <Field label="Pickup location" error={errors.pickupLocation?.message}><input className="input" placeholder="Enter area, landmark or address" value={values.pickupLocation || ''} onChange={(event) => update('pickupLocation', event.target.value)} /></Field>
+        {needsDestination && <Field label="Destination" error={errors.destination?.message}><input className="input" placeholder="Enter area, landmark or address" value={values.destination || ''} onChange={(event) => update('destination', event.target.value)} /></Field>}
+        {tripType === 'HOURLY' && (
+          <Field label="Rental duration" error={errors.hourlyDuration?.message}><select className="input" value={values.hourlyDuration || ''} onChange={(event) => update('hourlyDuration', Number(event.target.value))}><option value="">Select duration</option>{[2, 4, 6, 8, 10, 12].map((hours) => <option key={hours} value={hours}>{hours} hours</option>)}</select></Field>
+        )}
+        <Field label={tripType === 'OUTSTATION' ? 'Departure date' : 'Booking date'} error={errors.bookingDate?.message}><input className="input" type="date" value={values.bookingDate || ''} onChange={(event) => update('bookingDate', event.target.value)} /></Field>
+        {tripType === 'OUTSTATION' && values.journeyType === 'ROUND_TRIP' && <Field label="Return date" error={errors.returnDate?.message}><input className="input" type="date" value={values.returnDate || ''} onChange={(event) => update('returnDate', event.target.value)} /></Field>}
+        <Field label={tripType === 'HOURLY' ? 'Start time' : 'Pickup time'} error={errors.pickupTime?.message}><select className="input" value={values.pickupTime || ''} onChange={(event) => update('pickupTime', event.target.value)}><option value="">Select time</option>{timeOptions.map((time) => <option key={time} value={time}>{time}</option>)}</select></Field>
+        <Field label="AM / PM" error={errors.amPm?.message}><div className="grid grid-cols-2 gap-3"><CardChoice selected={values.amPm === 'AM'} onClick={() => update('amPm', 'AM')}><p className="text-center font-semibold text-slate-900">AM</p></CardChoice><CardChoice selected={values.amPm === 'PM'} onClick={() => update('amPm', 'PM')}><p className="text-center font-semibold text-slate-900">PM</p></CardChoice></div></Field>
+        <div className="sm:col-span-2"><Field label="Anything else we should know? (optional)" error={errors.specialNotes?.message}><textarea className="input min-h-24 resize-y" placeholder="Access notes, additional stop, luggage or accessibility requirements" value={values.specialNotes || ''} onChange={(event) => update('specialNotes', event.target.value)} /></Field></div>
+      </div>
+    </StepHeading>
+  );
 }
 
 function VehicleStep({ value, onChange }: { value: VehicleType; onChange: (value: VehicleType) => void }) { return <StepHeading number="06" title="Select your preferred vehicle" description="Vehicle requests are subject to availability; our team will confirm the final allocation."><div className="grid gap-3 sm:grid-cols-3">{VEHICLES.map((vehicle) => <CardChoice key={vehicle.id} selected={value === vehicle.type} onClick={() => onChange(vehicle.type)}><UsersRound className="h-5 w-5 text-brand-600" /><p className="mt-5 font-semibold text-slate-900">{vehicle.label}</p><p className="mt-1 text-xs text-slate-500">{vehicle.description}</p><div className="mt-5 flex gap-3 text-xs font-medium text-slate-600"><span>{vehicle.capacity} seats</span><span className="flex items-center gap-1"><Luggage className="h-3.5 w-3.5" />{vehicle.luggage}</span></div></CardChoice>)}</div></StepHeading>; }
