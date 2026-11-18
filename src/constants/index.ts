@@ -1,9 +1,14 @@
 import type { CityConfig, TripType, CabCategory, Vehicle, VehicleType } from '../types';
+import { BRAND, CONTACT, OPERATIONAL } from '../content/brand';
+import { DESTINATIONS } from '../content/destinations';
+import { LOCALITIES, COVERAGE_DISCLAIMER } from '../content/localities';
+import { HOURLY_PACKAGES, AIRPORT_FARES, OUTSTATION_PACKAGES, FARE_DISCLAIMER } from '../content/pricing';
+
+export { BRAND, CONTACT, OPERATIONAL, DESTINATIONS, LOCALITIES, COVERAGE_DISCLAIMER };
+export { HOURLY_PACKAGES, AIRPORT_FARES, OUTSTATION_PACKAGES, FARE_DISCLAIMER };
 
 export const CITIES: CityConfig[] = [
   { id: 'blr', name: 'Bangalore', countryCode: 'IN', enabled: true },
-  // Future cities:
-  // { id: 'del', name: 'Delhi', countryCode: 'IN', enabled: false },
 ];
 
 export const TRIP_TYPES: { id: TripType; label: string; description: string; icon: string }[] = [
@@ -24,6 +29,18 @@ export const TRIP_TYPES: { id: TripType; label: string; description: string; ico
     label: 'Outstation',
     description: 'Inter-city trips to neighboring destinations',
     icon: 'Route',
+  },
+  {
+    id: 'SELF_DRIVE',
+    label: 'Self-Drive',
+    description: 'Pick a vehicle and drive yourself',
+    icon: 'Car',
+  },
+  {
+    id: 'DRIVER_ON_HIRE',
+    label: 'Driver on Hire',
+    description: 'A professional driver for your own vehicle',
+    icon: 'UserRound',
   },
 ];
 
@@ -65,21 +82,25 @@ export const AIRPORTS: string[] = [
 ];
 
 export const POPULAR_ROUTES: { from: string; to: string; duration: string }[] = [
-  { from: 'Bangalore', to: 'Mysore', duration: '3–4 hrs' },
-  { from: 'Bangalore', to: 'Ooty', duration: '7–9 hrs' },
-  { from: 'Bangalore', to: 'Coimbatore', duration: '6–8 hrs' },
-  { from: 'Bangalore', to: 'Chikmagalur', duration: '5–7 hrs' },
+  { from: 'Bangalore', to: 'Mysore', duration: '4-5 hrs (indicative)' },
+  { from: 'Bangalore', to: 'Coorg', duration: '5-6 hrs (indicative)' },
+  { from: 'Bangalore', to: 'Nandi Hills', duration: 'about 2 hrs (indicative)' },
+  { from: 'Bangalore', to: 'Chikmagalur', duration: '5-7 hrs (indicative)' },
 ];
 
 export const SERVICES: { id: string; name: string; description: string; icon: string }[] = [
-  { id: 'hourly', name: 'Hourly Rentals', description: 'City rides on your schedule', icon: 'Clock' },
+  { id: 'hourly', name: 'Local Rides & Hourly', description: 'City travel on your schedule', icon: 'Clock' },
   { id: 'airport', name: 'Airport Transfers', description: 'Flight-tracked pickups & drops', icon: 'Plane' },
   { id: 'outstation', name: 'Outstation Trips', description: 'Comfortable inter-city travel', icon: 'Route' },
+  { id: 'self-drive', name: 'Self-Drive Rentals', description: 'Pick a car and drive yourself', icon: 'Car' },
+  { id: 'driver-on-hire', name: 'Driver on Hire', description: 'A driver for your own vehicle', icon: 'UserRound' },
+  { id: 'group', name: 'Group & Tempo Traveller', description: 'Family, team and event travel', icon: 'Users' },
 ];
 
 export const BOOKING_SERVICES: {
   id: string;
   tripType: TripType;
+  serviceId: import('../types').ServiceId;
   eyebrow: string;
   title: string;
   description: string;
@@ -90,33 +111,67 @@ export const BOOKING_SERVICES: {
   {
     id: 'airport',
     tripType: 'AIRPORT',
-    eyebrow: 'Arrival & departure',
+    serviceId: 'airport',
+    eyebrow: 'Airport transfers',
     title: 'Airport Transfers',
-    description: 'A measured, door-to-airport or airport-to-door journey planned around your flight.',
-    highlights: ['Pickup or drop-off', 'Flight-number support', 'Comfortable sedans'],
+    description:
+      'Catch your flight, not your breath. Plan your airport pickup or drop with confidence, with flight-number support where you share it.',
+    highlights: ['Pickup or drop-off', 'Flight-number support', 'Comfortable vehicles'],
   },
   {
-    id: 'outstation',
-    tripType: 'OUTSTATION',
-    eyebrow: 'Beyond the city',
-    title: 'Outstation Trips',
-    description: 'Plan a relaxed one-way or round-trip escape to destinations across Karnataka and beyond.',
-    highlights: ['One-way or round-trip', 'Inter-city travel', 'Flexible vehicle preference'],
+    id: 'local',
+    tripType: 'HOURLY',
+    serviceId: 'local',
+    eyebrow: 'Around the city',
+    title: 'Local Bangalore Rides',
+    description:
+      'From office commutes to shopping trips, book a comfortable ride around the city on your own schedule.',
+    highlights: ['Flexible duration', 'Multiple stops', 'City travel'],
   },
   {
     id: 'hourly',
     tripType: 'HOURLY',
+    serviceId: 'hourly',
     eyebrow: 'Your schedule',
     title: 'Hourly Rentals',
-    description: 'Move through meetings, errands and the city at your own pace with a dedicated cab.',
-    highlights: ['Flexible duration', 'Multiple stops', 'City travel'],
+    description: 'Your car, your schedule. Keep a vehicle and driver available for your planned hours.',
+    highlights: ['4-hour & 8-hour packages', 'Clear included km', 'Driver included'],
+  },
+  {
+    id: 'outstation',
+    tripType: 'OUTSTATION',
+    serviceId: 'outstation',
+    eyebrow: 'Beyond the city',
+    title: 'Outstation Trips',
+    description:
+      'Weekend escapes, family holidays and long-distance journeys made comfortable, one-way or round-trip.',
+    highlights: ['One-way or round-trip', 'Inter-city travel', 'Flexible vehicle preference'],
+  },
+  {
+    id: 'self-drive',
+    tripType: 'SELF_DRIVE',
+    serviceId: 'self-drive',
+    eyebrow: 'Drive yourself',
+    title: 'Self-Drive Rentals',
+    description: 'Choose your vehicle and enjoy the freedom of driving yourself, on your own route.',
+    highlights: ['Pick your vehicle', 'Own route & timing', 'Flexible duration'],
+  },
+  {
+    id: 'driver-on-hire',
+    tripType: 'DRIVER_ON_HIRE',
+    serviceId: 'driver-on-hire',
+    eyebrow: 'Your vehicle',
+    title: 'Driver on Hire',
+    description: 'Need a professional driver for your own vehicle? We arrange a courteous driver for your journey.',
+    highlights: ['Your own car', 'Professional driver', 'For any journey'],
   },
   {
     id: 'group',
     tripType: 'OUTSTATION',
+    serviceId: 'group',
     eyebrow: 'Travel together',
     title: 'Group & Tempo Traveller',
-    description: 'Create a comfortable shared journey for family, teams, events and sightseeing plans.',
+    description: '7- and 12-seater options for family trips, teams, events and group sightseeing.',
     highlights: ['Up to 12 seats', 'Extra luggage room', 'Outstation-ready'],
     category: 'TT',
     vehicleType: 'TT_12',
@@ -124,46 +179,116 @@ export const BOOKING_SERVICES: {
 ];
 
 export const WHY_CHOOSE_US: { title: string; description: string }[] = [
-  { title: 'Professional Drivers', description: 'Background-verified, trained, and courteous.' },
-  { title: 'Fair Pricing', description: 'Transparent rates. No hidden charges.' },
-  { title: 'On-Time Arrival', description: 'We track your flight and plan accordingly.' },
-  { title: '24/7 Availability', description: 'Round-the-clock service, every day of the week.' },
+  {
+    title: 'A ride that respects your time',
+    description: 'Clear pickup details and proactive communication from our team, so you are not left guessing.',
+  },
+  {
+    title: 'Comfort that matters',
+    description: 'Clean vehicles and comfortable seating for city hops and long outstation drives alike.',
+  },
+  {
+    title: 'Drivers you can communicate with',
+    description: 'Professional, courteous drivers. Language capabilities vary by driver and are confirmed on request.',
+  },
+  {
+    title: 'Pricing you can understand',
+    description: 'Know the package, what is included and what additional charges may apply before you book.',
+  },
+  {
+    title: 'Someone to talk to',
+    description: 'Reach a real human on WhatsApp or by phone for prices, vehicle requests and booking help.',
+  },
+  {
+    title: 'Travel for every occasion',
+    description: 'From airport transfers to family holidays and group trips, one service for the whole journey.',
+  },
 ];
 
-export const FAQS: { question: string; answer: string }[] = [
+export const FAQS: { question: string; answer: string; needsOperator: boolean }[] = [
   {
-    question: 'How do I book a ride?',
-    answer: 'Fill out the booking form on our website. Our team will contact you to confirm your ride details and share your driver information.',
+    question: 'How do I book a cab in Bangalore?',
+    answer:
+      'Use the booking widget on our website, or message us on WhatsApp. Our team confirms availability and next steps with you before anything is allocated.',
+    needsOperator: false,
   },
   {
-    question: 'Can I change my booking after it’s submitted?',
-    answer: 'Yes, just call us or reply to the confirmation email. Changes can be made as long as the ride hasn’t been assigned yet.',
+    question: 'Can I book a cab for early morning airport transfers?',
+    answer: 'Early-morning and late-night airport journeys are common. Share your flight details and we will plan the pickup around them.',
+    needsOperator: false,
   },
   {
-    question: 'What vehicles do you operate?',
-    answer: 'We operate sedans (4-5 seaters), SUVs (7 seaters), and Tempo Travellers (12 seaters) to suit your group size.',
+    question: 'Do you provide 24/7 airport service?',
+    answer:
+      'Please confirm 24/7 availability with our team before relying on it for a red-eye or very early flight.',
+    needsOperator: true,
   },
   {
-    question: 'Do you handle flight delays?',
-    answer: 'Absolutely. For airport transfers, we track your flight number and adjust your pickup time if there’s a delay.',
+    question: 'Can I book an Innova Crysta for family travel?',
+    answer:
+      'Our 7-seater option suits family trips. Tell us your group size and we will confirm the vehicle that fits.',
+    needsOperator: true,
+  },
+  {
+    question: 'Can I book a Tempo Traveller?',
+    answer: 'Yes, for groups of up to 12. The operator confirms availability for your dates before allocation.',
+    needsOperator: false,
+  },
+  {
+    question: 'Do you provide one-way outstation trips?',
+    answer: 'Yes, one-way and round-trip outstation journeys are both supported. Tolls and driver allowance are confirmed per journey.',
+    needsOperator: false,
+  },
+  {
+    question: 'Can I book a cab for 4 or 8 hours?',
+    answer:
+      'Hourly packages of 4 hours / 40 km and 8 hours / 80 km are reference prices from our flyer. Confirm applicability with our team.',
+    needsOperator: true,
+  },
+  {
+    question: 'Are tolls and parking included?',
+    answer:
+      'Tolls, parking and any night or extra-km charges are confirmed with you before the journey, so there are no surprises on the day.',
+    needsOperator: false,
+  },
+  {
+    question: 'Can I book a cab for Mysore or Coorg?',
+    answer:
+      'Yes. Both are popular outstation destinations. Distances are indicative; final pricing and driver allowance are confirmed per booking.',
+    needsOperator: true,
+  },
+  {
+    question: 'How do I know my booking is confirmed?',
+    answer:
+      'You receive a booking reference when the request is submitted. Confirmation happens when our team contacts you - it is not automatic on submission.',
+    needsOperator: false,
+  },
+  {
+    question: 'Can I cancel or reschedule?',
+    answer: 'Changes are possible while the ride has not been assigned yet. Call us or reply to the confirmation with your booking reference.',
+    needsOperator: true,
+  },
+  {
+    question: 'How do I contact my driver?',
+    answer: 'Once a driver is assigned, our team shares their contact details with you. Keep your booking reference handy.',
+    needsOperator: false,
+  },
+  {
+    question: 'Can I book a driver for my own car?',
+    answer: 'Yes - Driver on Hire arranges a professional driver for your own vehicle. Tell us the vehicle details and journey.',
+    needsOperator: false,
+  },
+  {
+    question: 'Do you offer self-drive rentals?',
+    answer: 'Self-drive rental is available subject to vehicle and licence confirmation. Tell us your licence type and preferred vehicle.',
+    needsOperator: true,
+  },
+  {
+    question: 'How do I get a final fare quotation?',
+    answer: 'Share your journey details on WhatsApp or the booking form. Our team returns a confirmed quote before you commit.',
+    needsOperator: false,
   },
 ];
 
-export const TESTIMONIALS: { name: string; quote: string; trip: string }[] = [
-  // Placeholder content - replace with real customer feedback
-  {
-    name: 'Aarav S.',
-    quote: 'Smooth airport pickup even when my flight was delayed 40 minutes. The driver was right on time when I landed.',
-    trip: 'Airport Transfer',
-  },
-  {
-    name: 'Meera K.',
-    quote: 'Booked a Tempo Traveller for a team of 10 going to Coimbatore. Very comfortable and the fare was fair.',
-    trip: 'Outstation Trip',
-  },
-  {
-    name: 'Demo Content',
-    quote: 'This is placeholder content. Replace with real customer testimonials.',
-    trip: 'Placeholder',
-  },
-];
+// No fabricated testimonials. Real customer quotes can be added here after approval.
+export const TESTIMONIALS: { name: string; quote: string; trip: string }[] = [];

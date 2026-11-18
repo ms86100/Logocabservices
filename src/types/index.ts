@@ -1,4 +1,12 @@
-export type TripType = 'HOURLY' | 'AIRPORT' | 'OUTSTATION';
+export type TripType = 'HOURLY' | 'AIRPORT' | 'OUTSTATION' | 'SELF_DRIVE' | 'DRIVER_ON_HIRE';
+export type ServiceId =
+  | 'airport'
+  | 'local'
+  | 'hourly'
+  | 'outstation'
+  | 'group'
+  | 'self-drive'
+  | 'driver-on-hire';
 export type CabCategory = 'COMFORT' | 'PREMIUM' | 'TT';
 export type VehicleType = 'SEATER_5' | 'SEATER_7' | 'TT_12';
 export type JourneyType = 'ONE_WAY' | 'ROUND_TRIP';
@@ -13,12 +21,17 @@ export type BookingStatus =
 export interface BookingRequest {
   id?: string;
   bookingReference: string;
+  serviceId?: ServiceId;
   customerName: string;
   phoneNumber: string;
   email?: string;
   tripType: TripType;
   cabCategory: CabCategory;
   city: string;
+  // Self-drive
+  licenseNote?: string;
+  // Driver-on-hire
+  ownVehicleDetails?: string;
   // Hourly
   hourlyDuration?: number; // hours
   // Airport

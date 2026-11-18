@@ -10,6 +10,7 @@ type BookingInput = {
   city: string; pickupLocation: string; destination?: string; bookingDate: string; pickupTime: string;
   amPm: string; hourlyDuration?: number; airport?: string; airportType?: string; flightNumber?: string;
   journeyType?: string; returnDate?: string; vehicleType: string; specialNotes?: string;
+  serviceId?: string; licenseNote?: string; ownVehicleDetails?: string;
 };
 
 function validateBooking(value: unknown): { data: BookingInput } | { error: string } {
@@ -20,7 +21,10 @@ function validateBooking(value: unknown): { data: BookingInput } | { error: stri
   if (!string('customerName', 2, 80) || !string('city', 2, 80) || !string('pickupLocation', 3, 180)) return { error: 'Customer, city, and pickup details are required.' };
   if (!string('phoneNumber') || !/^(?:\+91[ -]?)?[6-9]\d{9}$/.test(data.phoneNumber as string)) return { error: 'A valid Indian mobile number is required.' };
   if (data.email && (!string('email') || !/^\S+@\S+\.\S+$/.test(data.email as string))) return { error: 'Email address is invalid.' };
-  if (!['HOURLY', 'AIRPORT', 'OUTSTATION'].includes(data.tripType as string) || !['COMFORT', 'PREMIUM', 'TT'].includes(data.cabCategory as string) || !['SEATER_5', 'SEATER_7', 'TT_12'].includes(data.vehicleType as string) || !['AM', 'PM'].includes(data.amPm as string)) return { error: 'Booking options are invalid.' };
+  if (!['HOURLY', 'AIRPORT', 'OUTSTATION', 'SELF_DRIVE', 'DRIVER_ON_HIRE'].includes(data.tripType as string) || !['COMFORT', 'PREMIUM', 'TT'].includes(data.cabCategory as string) || !['SEATER_5', 'SEATER_7', 'TT_12'].includes(data.vehicleType as string) || !['AM', 'PM'].includes(data.amPm as string)) return { error: 'Booking options are invalid.' };
+  if (data.serviceId && !['airport', 'local', 'hourly', 'outstation', 'group', 'self-drive', 'driver-on-hire'].includes(data.serviceId as string)) return { error: 'Service is invalid.' };
+  if (data.licenseNote && !string('licenseNote', 0, 300)) return { error: 'License note is too long.' };
+  if (data.ownVehicleDetails && !string('ownVehicleDetails', 0, 300)) return { error: 'Vehicle details are too long.' };
   if (!string('bookingDate') || !/^\d{4}-\d{2}-\d{2}$/.test(data.bookingDate as string) || !string('pickupTime') || !/^([01]\d|2[0-3]):[0-5]\d$/.test(data.pickupTime as string)) return { error: 'Booking date or time is invalid.' };
   if (data.destination && !string('destination', 0, 180)) return { error: 'Destination is too long.' };
   if (data.tripType !== 'HOURLY' && !string('destination', 1, 180)) return { error: 'Destination is required.' };
@@ -76,6 +80,7 @@ Deno.serve(async (request) => {
         airport_type: data.airportType?.toLowerCase() || null, flight_number: data.flightNumber || null,
         journey_type: data.journeyType?.toLowerCase() || null, return_date: data.returnDate || null,
         vehicle_type: data.vehicleType.toLowerCase(), special_notes: data.specialNotes || null,
+        service_id: data.serviceId || null,
       }).select('id, booking_reference').single();
       if (!result.error) inserted = result.data;
       else if (result.error.code !== '23505') throw result.error;
@@ -89,7 +94,7 @@ Deno.serve(async (request) => {
       const safe = Object.fromEntries(Object.entries(data).map(([key, value]) => [key, escapeHtml(String(value || '-'))]));
       const send = (to: string, subject: string, html: string) => fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: fromEmail, to, subject, html }) });
       await send(adminEmail, `New booking request: ${inserted.booking_reference}`, `<main style="font-family:Arial,sans-serif;color:#0f172a"><h1>New booking request</h1><p><b>Reference:</b> ${inserted.booking_reference}</p><p><b>Customer:</b> ${safe.customerName}</p><p><b>Phone:</b> ${safe.phoneNumber}</p><p><b>Email:</b> ${safe.email}</p><p><b>Trip:</b> ${safe.tripType} · ${safe.vehicleType}</p><p><b>Journey:</b> ${safe.pickupLocation} → ${safe.destination}</p><p><b>When:</b> ${safe.bookingDate} at ${safe.pickupTime} ${safe.amPm}</p></main>`);
-      if (data.email) await send(data.email, `We received your CityCab request - ${inserted.booking_reference}`, `<main style="font-family:Arial,sans-serif;color:#0f172a"><h1>Thanks, ${safe.customerName}.</h1><p>Your booking request has been received. Your reference is <b>${inserted.booking_reference}</b>.</p><p>This is a request, not a confirmed cab allocation. Our team will contact you about availability and next steps.</p></main>`);
+      if (data.email) await send(data.email, `We received your LOGO CAB SERVICES request - ${inserted.booking_reference}`, `<main style="font-family:Arial,sans-serif;color:#0f172a"><h1>Thanks, ${safe.customerName}.</h1><p>Your booking request has been received. Your reference is <b>${inserted.booking_reference}</b>.</p><p>This is a request, not a confirmed cab allocation. Our team will contact you about availability and next steps.</p></main>`);
     }
     return Response.json({ id: inserted.id, bookingReference: inserted.booking_reference }, { status: 201, headers: corsHeaders });
   } catch (error) {

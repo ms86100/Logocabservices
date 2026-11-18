@@ -18,7 +18,12 @@ export const bookingRequestSchema = z
       .email('Enter a valid email')
       .optional()
       .or(z.literal('').optional()),
-    tripType: z.enum(['HOURLY', 'AIRPORT', 'OUTSTATION']),
+    tripType: z.enum(['HOURLY', 'AIRPORT', 'OUTSTATION', 'SELF_DRIVE', 'DRIVER_ON_HIRE']),
+    serviceId: z
+      .enum(['airport', 'local', 'hourly', 'outstation', 'group', 'self-drive', 'driver-on-hire'])
+      .optional(),
+    licenseNote: z.string().max(300).optional().or(z.literal('')),
+    ownVehicleDetails: z.string().max(300).optional().or(z.literal('')),
     cabCategory: z.enum(['COMFORT', 'PREMIUM', 'TT']),
     city: z.string().min(1),
     pickupLocation: z.string().min(3, 'Pickup location is required'),
@@ -50,6 +55,30 @@ export const bookingRequestSchema = z
     {
       message: 'Rental duration is required for hourly rentals',
       path: ['hourlyDuration'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.tripType === 'SELF_DRIVE') {
+        return Boolean(data.licenseNote?.trim() || data.specialNotes?.trim());
+      }
+      return true;
+    },
+    {
+      message: 'Tell us your licence type or any self-drive requirement',
+      path: ['licenseNote'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.tripType === 'DRIVER_ON_HIRE') {
+        return Boolean(data.ownVehicleDetails?.trim() || data.specialNotes?.trim());
+      }
+      return true;
+    },
+    {
+      message: 'Tell us about your vehicle so we can arrange a suitable driver',
+      path: ['ownVehicleDetails'],
     }
   )
   .refine(

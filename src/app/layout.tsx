@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, Manrope } from 'next/font/google';
 import '../globals.css';
 import ServiceWorker from '@/components/ui/ServiceWorker';
+import { BRAND, CONTACT } from '@/content/brand';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -15,19 +16,37 @@ const manrope = Manrope({
   display: 'swap',
 });
 
+const localBusinessJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  name: BRAND.name,
+  description:
+    'Airport transfers, hourly city rides, outstation journeys and self-drive rentals in Bangalore.',
+  telephone: CONTACT.phoneDisplay,
+  areaServed: 'Bangalore, Karnataka, India',
+};
+
+const serviceJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  name: 'Cab booking in Bangalore',
+  provider: { '@type': 'LocalBusiness', name: BRAND.name },
+  serviceType: 'Airport transfer, hourly rental, outstation trip, self-drive and driver on hire',
+  areaServed: 'Bangalore, Karnataka, India',
+};
+
 export const metadata: Metadata = {
   title: {
-    default: 'CityCab - Premium Cab Booking & Travel Platform',
-    template: '%s | CityCab',
+    default: `${BRAND.name} - ${BRAND.headline}`,
+    template: `%s | ${BRAND.name}`,
   },
   description:
-    'From airport transfers to hourly city rides and outstation journeys, travel comfortably with a premium booking experience designed around you.',
+    'Airport transfers, comfortable city rides, outstation journeys and convenient rentals in Bangalore. Transparent fares, professional drivers and real human booking assistance.',
   openGraph: {
-    title: 'CityCab - Your Journey. Your Time. Your Way.',
-    description:
-      'Premium cab booking: hourly rentals, airport transfers, outstation trips. Bangalore and beyond.',
+    title: `${BRAND.name} - ${BRAND.headline}`,
+    description: BRAND.supporting,
     url: '/',
-    siteName: 'CityCab',
+    siteName: BRAND.name,
     type: 'website',
   },
   robots: {
@@ -42,7 +61,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black',
-    title: 'CityCab',
+    title: BRAND.shortName,
   },
   icons: [
     { rel: 'icon', type: 'image/svg+xml', url: '/icons/app-icon.svg' },
@@ -68,6 +87,14 @@ export default function RootLayout({
       className={`${inter.variable} ${manrope.variable}`}
     >
       <body className="bg-white text-slate-900 antialiased font-[Inter]">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
+        />
         {children}
         <ServiceWorker />
       </body>

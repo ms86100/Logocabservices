@@ -1,7 +1,7 @@
 {
-  "name": "CityCab",
-  "short_name": "CityCab",
-  "description": "Fast, reliable cab service. Book in seconds.",
+  "name": "LOGO CAB SERVICES",
+  "short_name": "LOGO",
+  "description": "Bangalore airport transfers, hourly rides, outstation and self-drive. Book with confidence.",
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#0f172a",

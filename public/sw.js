@@ -1,4 +1,4 @@
-const CACHE_NAME = 'citycab-static-v1';
+const CACHE_NAME = 'logocab-static-v1';
 const CORE_ASSETS = ['/', '/manifest.json', '/icons/app-icon.svg'];
 
 self.addEventListener('install', (event) => {

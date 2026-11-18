@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://your-domain.example/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
+  <url><loc>https://your-domain.example/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://your-domain.example/lookup/</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://your-domain.example/seo/cab-service-bangalore/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://your-domain.example/seo/airport-taxi-bangalore/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://your-domain.example/seo/bangalore-local-cab-rental/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://your-domain.example/seo/bangalore-hourly-cab-booking/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://your-domain.example/seo/bangalore-outstation-cab-service/</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://your-domain.example/seo/bangalore-to-mysore-cab/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://your-domain.example/seo/bangalore-to-coorg-cab/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://your-domain.example/seo/tempo-traveller-rental-bangalore/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://your-domain.example/seo/innova-crysta-rental-bangalore/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://your-domain.example/seo/driver-on-hire-bangalore/</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 </urlset>

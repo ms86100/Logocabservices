@@ -2,7 +2,7 @@
 
 The frontend is static-exported, uses a browser-only Supabase Edge Function client, and keeps booking models and validation outside the UI. It is ready to be wrapped once the web deployment is stable.
 
-1. Install Capacitor packages: `npm install @capacitor/core @capacitor/cli` and run `npx cap init CityCab com.example.citycab --web-dir out`.
+1. Install Capacitor packages: `npm install @capacitor/core @capacitor/cli` and run `npx cap init "LOGO CAB SERVICES" com.example.logocab --web-dir out`.
 2. Build the static site with `npm run build`, then add the native projects using `npx cap add ios` and `npx cap add android`.
 3. Run `npx cap sync` after every web build. Replace `public/icons/app-icon.svg` with required Android/iOS raster icon and splash-screen assets at this stage.
 4. Configure native safe areas, status-bar colors, deep-link domains, and allowlist the Supabase project URL in the native platform configuration.
