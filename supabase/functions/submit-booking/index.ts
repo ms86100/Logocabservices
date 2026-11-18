@@ -1,38 +1,38 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { z } from 'npm:zod@3.25.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const bookingSchema = z.object({
-  customerName: z.string().trim().min(2).max(80),
-  phoneNumber: z.string().regex(/^(?:\+91[ -]?)?[6-9]\d{9}$/),
-  email: z.string().email().optional().or(z.literal('')),
-  tripType: z.enum(['HOURLY', 'AIRPORT', 'OUTSTATION']),
-  cabCategory: z.enum(['COMFORT', 'PREMIUM', 'TT']),
-  city: z.string().trim().min(2).max(80),
-  pickupLocation: z.string().trim().min(3).max(180),
-  destination: z.string().trim().max(180).optional().or(z.literal('')),
-  bookingDate: z.string().date(),
-  pickupTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
-  amPm: z.enum(['AM', 'PM']),
-  hourlyDuration: z.number().int().min(1).max(24).optional(),
-  airport: z.string().trim().max(120).optional(),
-  airportType: z.enum(['PICKUP', 'DROP_OFF']).optional(),
-  flightNumber: z.string().regex(/^[A-Za-z0-9 ]{2,10}$/).optional().or(z.literal('')),
-  journeyType: z.enum(['ONE_WAY', 'ROUND_TRIP']).optional(),
-  returnDate: z.string().date().optional().or(z.literal('')),
-  vehicleType: z.enum(['SEATER_5', 'SEATER_7', 'TT_12']),
-  specialNotes: z.string().trim().max(500).optional().or(z.literal('')),
-}).superRefine((data, context) => {
-  if (data.tripType !== 'HOURLY' && !data.destination) context.addIssue({ code: 'custom', path: ['destination'], message: 'Destination is required.' });
-  if (data.tripType === 'HOURLY' && !data.hourlyDuration) context.addIssue({ code: 'custom', path: ['hourlyDuration'], message: 'Rental duration is required.' });
-  if (data.tripType === 'AIRPORT' && (!data.airport || !data.airportType)) context.addIssue({ code: 'custom', path: ['airport'], message: 'Airport details are required.' });
-  if (data.tripType === 'OUTSTATION' && data.journeyType === 'ROUND_TRIP' && !data.returnDate) context.addIssue({ code: 'custom', path: ['returnDate'], message: 'Return date is required.' });
-  if (data.returnDate && data.returnDate < data.bookingDate) context.addIssue({ code: 'custom', path: ['returnDate'], message: 'Return date must follow departure.' });
-});
+type BookingInput = {
+  customerName: string; phoneNumber: string; email?: string; tripType: string; cabCategory: string;
+  city: string; pickupLocation: string; destination?: string; bookingDate: string; pickupTime: string;
+  amPm: string; hourlyDuration?: number; airport?: string; airportType?: string; flightNumber?: string;
+  journeyType?: string; returnDate?: string; vehicleType: string; specialNotes?: string;
+};
+
+function validateBooking(value: unknown): { data: BookingInput } | { error: string } {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return { error: 'Request body must be an object.' };
+  const data = value as Record<string, unknown>;
+  const string = (key: string, min = 0, max = Number.MAX_SAFE_INTEGER) =>
+    typeof data[key] === 'string' && data[key].trim().length >= min && data[key].trim().length <= max;
+  if (!string('customerName', 2, 80) || !string('city', 2, 80) || !string('pickupLocation', 3, 180)) return { error: 'Customer, city, and pickup details are required.' };
+  if (!string('phoneNumber') || !/^(?:\+91[ -]?)?[6-9]\d{9}$/.test(data.phoneNumber as string)) return { error: 'A valid Indian mobile number is required.' };
+  if (data.email && (!string('email') || !/^\S+@\S+\.\S+$/.test(data.email as string))) return { error: 'Email address is invalid.' };
+  if (!['HOURLY', 'AIRPORT', 'OUTSTATION'].includes(data.tripType as string) || !['COMFORT', 'PREMIUM', 'TT'].includes(data.cabCategory as string) || !['SEATER_5', 'SEATER_7', 'TT_12'].includes(data.vehicleType as string) || !['AM', 'PM'].includes(data.amPm as string)) return { error: 'Booking options are invalid.' };
+  if (!string('bookingDate') || !/^\d{4}-\d{2}-\d{2}$/.test(data.bookingDate as string) || !string('pickupTime') || !/^([01]\d|2[0-3]):[0-5]\d$/.test(data.pickupTime as string)) return { error: 'Booking date or time is invalid.' };
+  if (data.destination && !string('destination', 0, 180)) return { error: 'Destination is too long.' };
+  if (data.tripType !== 'HOURLY' && !string('destination', 1, 180)) return { error: 'Destination is required.' };
+  if (data.tripType === 'HOURLY' && (!Number.isInteger(data.hourlyDuration) || (data.hourlyDuration as number) < 1 || (data.hourlyDuration as number) > 24)) return { error: 'Rental duration is required.' };
+  if (data.tripType === 'AIRPORT' && (!string('airport', 1, 120) || !['PICKUP', 'DROP_OFF'].includes(data.airportType as string))) return { error: 'Airport details are required.' };
+  if (data.flightNumber && (!string('flightNumber') || !/^[A-Za-z0-9 ]{2,10}$/.test(data.flightNumber as string))) return { error: 'Flight number is invalid.' };
+  if (data.journeyType && !['ONE_WAY', 'ROUND_TRIP'].includes(data.journeyType as string)) return { error: 'Journey type is invalid.' };
+  if (data.returnDate && (!string('returnDate') || !/^\d{4}-\d{2}-\d{2}$/.test(data.returnDate as string) || (data.returnDate as string) < (data.bookingDate as string))) return { error: 'Return date is invalid.' };
+  if (data.tripType === 'OUTSTATION' && data.journeyType === 'ROUND_TRIP' && !data.returnDate) return { error: 'Return date is required.' };
+  if (data.specialNotes && !string('specialNotes', 0, 500)) return { error: 'Special notes are too long.' };
+  return { data: data as BookingInput };
+}
 
 function bookingReference() {
   const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -55,8 +55,8 @@ Deno.serve(async (request) => {
   if (request.method !== 'POST') return Response.json({ error: 'Method not allowed.' }, { status: 405, headers: corsHeaders });
 
   try {
-    const input = bookingSchema.safeParse(await request.json());
-    if (!input.success) return Response.json({ error: 'Invalid booking details.', details: input.error.flatten() }, { status: 400, headers: corsHeaders });
+    const input = validateBooking(await request.json());
+    if ('error' in input) return Response.json({ error: 'Invalid booking details.', details: input.error }, { status: 400, headers: corsHeaders });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
