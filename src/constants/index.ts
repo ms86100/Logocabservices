@@ -104,7 +104,7 @@ export const FAQS: { question: string; answer: string }[] = [
 ];
 
 export const TESTIMONIALS: { name: string; quote: string; trip: string }[] = [
-  // Placeholder content — replace with real customer feedback
+  // Placeholder content - replace with real customer feedback
   {
     name: 'Aarav S.',
     quote: 'Smooth airport pickup even when my flight was delayed 40 minutes. The driver was right on time when I landed.',

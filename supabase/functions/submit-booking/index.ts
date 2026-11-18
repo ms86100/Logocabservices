@@ -86,10 +86,10 @@ Deno.serve(async (request) => {
     const resendKey = Deno.env.get('RESEND_API_KEY');
     const fromEmail = Deno.env.get('RESEND_FROM_EMAIL');
     if (adminEmail && resendKey && fromEmail) {
-      const safe = Object.fromEntries(Object.entries(data).map(([key, value]) => [key, escapeHtml(String(value || '—'))]));
+      const safe = Object.fromEntries(Object.entries(data).map(([key, value]) => [key, escapeHtml(String(value || '-'))]));
       const send = (to: string, subject: string, html: string) => fetch('https://api.resend.com/emails', { method: 'POST', headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: fromEmail, to, subject, html }) });
       await send(adminEmail, `New booking request: ${inserted.booking_reference}`, `<main style="font-family:Arial,sans-serif;color:#0f172a"><h1>New booking request</h1><p><b>Reference:</b> ${inserted.booking_reference}</p><p><b>Customer:</b> ${safe.customerName}</p><p><b>Phone:</b> ${safe.phoneNumber}</p><p><b>Email:</b> ${safe.email}</p><p><b>Trip:</b> ${safe.tripType} · ${safe.vehicleType}</p><p><b>Journey:</b> ${safe.pickupLocation} → ${safe.destination}</p><p><b>When:</b> ${safe.bookingDate} at ${safe.pickupTime} ${safe.amPm}</p></main>`);
-      if (data.email) await send(data.email, `We received your CityCab request — ${inserted.booking_reference}`, `<main style="font-family:Arial,sans-serif;color:#0f172a"><h1>Thanks, ${safe.customerName}.</h1><p>Your booking request has been received. Your reference is <b>${inserted.booking_reference}</b>.</p><p>This is a request, not a confirmed cab allocation. Our team will contact you about availability and next steps.</p></main>`);
+      if (data.email) await send(data.email, `We received your CityCab request - ${inserted.booking_reference}`, `<main style="font-family:Arial,sans-serif;color:#0f172a"><h1>Thanks, ${safe.customerName}.</h1><p>Your booking request has been received. Your reference is <b>${inserted.booking_reference}</b>.</p><p>This is a request, not a confirmed cab allocation. Our team will contact you about availability and next steps.</p></main>`);
     }
     return Response.json({ id: inserted.id, bookingReference: inserted.booking_reference }, { status: 201, headers: corsHeaders });
   } catch (error) {

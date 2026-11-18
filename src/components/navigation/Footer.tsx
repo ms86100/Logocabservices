@@ -80,7 +80,7 @@ export default function Footer() {
             © {new Date().getFullYear()} CityCab. All rights reserved.
           </p>
           <p className="text-xs text-slate-500">
-            This is a booking request platform — not a confirmed allocation service.
+            This is a booking request platform - not a confirmed allocation service.
           </p>
         </div>
       </div>

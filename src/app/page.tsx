@@ -13,7 +13,7 @@ import Contact from '@/components/sections/Contact';
 import Footer from '@/components/navigation/Footer';
 
 export const metadata: Metadata = {
-  title: 'CityCab — Premium Cab Booking & Travel Platform',
+  title: 'CityCab - Premium Cab Booking & Travel Platform',
 };
 
 export default function Home() {

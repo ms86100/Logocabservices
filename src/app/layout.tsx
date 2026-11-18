@@ -17,13 +17,13 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
   title: {
-    default: 'CityCab — Premium Cab Booking & Travel Platform',
+    default: 'CityCab - Premium Cab Booking & Travel Platform',
     template: '%s | CityCab',
   },
   description:
     'From airport transfers to hourly city rides and outstation journeys, travel comfortably with a premium booking experience designed around you.',
   openGraph: {
-    title: 'CityCab — Your Journey. Your Time. Your Way.',
+    title: 'CityCab - Your Journey. Your Time. Your Way.',
     description:
       'Premium cab booking: hourly rentals, airport transfers, outstation trips. Bangalore and beyond.',
     url: '/',
