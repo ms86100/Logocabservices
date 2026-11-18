@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useForm, type FieldErrors, type UseFormRegister, type UseFormSetValue } from 'react-hook-form';
 import {
@@ -85,6 +85,7 @@ export default function BookingWidget() {
     setValue,
     getValues,
     setError,
+    clearErrors,
     formState: { errors },
   } = useForm<BookingRequestInput>({
     shouldUnregister: false,
@@ -108,6 +109,55 @@ export default function BookingWidget() {
   });
   const values = watch();
   const tripType = values.tripType;
+
+  useEffect(() => {
+    const applySelection = (detail: {
+      tripType: TripType;
+      destination?: string;
+      category?: CabCategory;
+      vehicleType?: VehicleType;
+    }) => {
+      if (!['HOURLY', 'AIRPORT', 'OUTSTATION'].includes(detail.tripType)) return;
+      setValue('tripType', detail.tripType, { shouldDirty: true });
+      if (detail.destination) setValue('destination', detail.destination, { shouldDirty: true });
+      if (detail.category && ['COMFORT', 'PREMIUM', 'TT'].includes(detail.category)) {
+        setValue('cabCategory', detail.category, { shouldDirty: true });
+      }
+      if (detail.vehicleType && ['SEATER_5', 'SEATER_7', 'TT_12'].includes(detail.vehicleType)) {
+        setValue('vehicleType', detail.vehicleType, { shouldDirty: true });
+      }
+      clearErrors(['tripType', 'destination', 'cabCategory', 'vehicleType']);
+      setSubmittedReference(undefined);
+      setSubmitError(undefined);
+      setStep(detail.destination ? 4 : 0);
+    };
+
+    const onSelection = (event: Event) => {
+      applySelection((event as CustomEvent<{
+        tripType: TripType;
+        destination?: string;
+        category?: CabCategory;
+        vehicleType?: VehicleType;
+      }>).detail);
+    };
+
+    const hash = window.location.hash;
+    if (hash.startsWith('#book?')) {
+      const params = new URLSearchParams(hash.split('?')[1]);
+      const trip = params.get('trip') as TripType | null;
+      if (trip && ['HOURLY', 'AIRPORT', 'OUTSTATION'].includes(trip)) {
+        applySelection({
+          tripType: trip,
+          destination: params.get('destination') || undefined,
+          category: (params.get('category') as CabCategory | null) || undefined,
+          vehicleType: (params.get('vehicle') as VehicleType | null) || undefined,
+        });
+      }
+    }
+
+    window.addEventListener('citycab:select-booking', onSelection);
+    return () => window.removeEventListener('citycab:select-booking', onSelection);
+  }, [clearErrors, setValue]);
 
   const moveNext = () => setStep((current) => Math.min(current + 1, steps.length - 1));
   const moveBack = () => setStep((current) => Math.max(current - 1, 0));

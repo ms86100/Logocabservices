@@ -64,17 +64,63 @@ export const AIRPORTS: string[] = [
   'Kempegowda International Airport (BLR)',
 ];
 
-export const POPULAR_ROUTES: { from: string; to: string }[] = [
-  { from: 'Bangalore', to: 'Mysore' },
-  { from: 'Bangalore', to: 'Ooty' },
-  { from: 'Bangalore', to: 'Coimbatore' },
-  { from: 'Bangalore', to: 'Chikmagalur' },
+export const POPULAR_ROUTES: { from: string; to: string; duration: string }[] = [
+  { from: 'Bangalore', to: 'Mysore', duration: '3–4 hrs' },
+  { from: 'Bangalore', to: 'Ooty', duration: '7–9 hrs' },
+  { from: 'Bangalore', to: 'Coimbatore', duration: '6–8 hrs' },
+  { from: 'Bangalore', to: 'Chikmagalur', duration: '5–7 hrs' },
 ];
 
 export const SERVICES: { id: string; name: string; description: string; icon: string }[] = [
   { id: 'hourly', name: 'Hourly Rentals', description: 'City rides on your schedule', icon: 'Clock' },
   { id: 'airport', name: 'Airport Transfers', description: 'Flight-tracked pickups & drops', icon: 'Plane' },
   { id: 'outstation', name: 'Outstation Trips', description: 'Comfortable inter-city travel', icon: 'Route' },
+];
+
+export const BOOKING_SERVICES: {
+  id: string;
+  tripType: TripType;
+  eyebrow: string;
+  title: string;
+  description: string;
+  highlights: string[];
+  category?: CabCategory;
+  vehicleType?: VehicleType;
+}[] = [
+  {
+    id: 'airport',
+    tripType: 'AIRPORT',
+    eyebrow: 'Arrival & departure',
+    title: 'Airport Transfers',
+    description: 'A measured, door-to-airport or airport-to-door journey planned around your flight.',
+    highlights: ['Pickup or drop-off', 'Flight-number support', 'Comfortable sedans'],
+  },
+  {
+    id: 'outstation',
+    tripType: 'OUTSTATION',
+    eyebrow: 'Beyond the city',
+    title: 'Outstation Trips',
+    description: 'Plan a relaxed one-way or round-trip escape to destinations across Karnataka and beyond.',
+    highlights: ['One-way or round-trip', 'Inter-city travel', 'Flexible vehicle preference'],
+  },
+  {
+    id: 'hourly',
+    tripType: 'HOURLY',
+    eyebrow: 'Your schedule',
+    title: 'Hourly Rentals',
+    description: 'Move through meetings, errands and the city at your own pace with a dedicated cab.',
+    highlights: ['Flexible duration', 'Multiple stops', 'City travel'],
+  },
+  {
+    id: 'group',
+    tripType: 'OUTSTATION',
+    eyebrow: 'Travel together',
+    title: 'Group & Tempo Traveller',
+    description: 'Create a comfortable shared journey for family, teams, events and sightseeing plans.',
+    highlights: ['Up to 12 seats', 'Extra luggage room', 'Outstation-ready'],
+    category: 'TT',
+    vehicleType: 'TT_12',
+  },
 ];
 
 export const WHY_CHOOSE_US: { title: string; description: string }[] = [
