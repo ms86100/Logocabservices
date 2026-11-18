@@ -87,6 +87,7 @@ export default function BookingWidget() {
     setError,
     formState: { errors },
   } = useForm<BookingRequestInput>({
+    shouldUnregister: false,
     defaultValues: {
       tripType: 'AIRPORT',
       cabCategory: 'COMFORT',
@@ -96,7 +97,10 @@ export default function BookingWidget() {
       airport: 'Kempegowda International Airport (BLR)',
       airportType: 'PICKUP',
       journeyType: 'ONE_WAY',
+      pickupLocation: '',
       destination: '',
+      bookingDate: '',
+      pickupTime: '',
       email: '',
       flightNumber: '',
       specialNotes: '',
@@ -110,7 +114,18 @@ export default function BookingWidget() {
 
   async function handleSubmit() {
     setSubmitError(undefined);
-    const validation = bookingRequestSchema.safeParse(getValues());
+    const formValues = getValues();
+    const normalizedValues = {
+      ...formValues,
+      customerName: formValues.customerName?.trim(),
+      phoneNumber: formValues.phoneNumber?.trim(),
+      pickupLocation: formValues.pickupLocation?.trim(),
+      destination: formValues.destination?.trim(),
+      bookingDate: formValues.bookingDate?.trim(),
+      pickupTime: formValues.pickupTime?.trim(),
+      email: formValues.email?.trim(),
+    };
+    const validation = bookingRequestSchema.safeParse(normalizedValues);
     if (!validation.success) {
       validation.error.issues.forEach((issue) => {
         const field = issue.path[0] as keyof BookingRequestInput;
